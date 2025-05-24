@@ -266,9 +266,9 @@ class VideoAgent(Agent):
                 if len(self.frames) >= 5:
                     mid_idx = len(self.frames) // 2
                     current_frames.append(("middle", self.frames[mid_idx]))
-            # clear the frames after using them to avoid memory bloat
-            self.frames = []
         logger.info(f"Adding {len(current_frames)} frames to conversation (from {len(self.frames)} available)")
+        # clear the frames after using them to avoid memory bloat
+        self.frames = []
         # return frames in reverse order so earliest frames appear first in context
         return list(reversed(current_frames))
 
