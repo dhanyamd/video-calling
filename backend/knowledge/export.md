@@ -1,7 +1,7 @@
 # CloudDash Data Export Guide
 
 ## Overview
-CloudDash offers multiple ways to export your data for analysis, reporting, and integration with other systems. This guide covers the available export formats, their limitations, and common troubleshooting steps.
+Export your CloudDash data in multiple formats for analysis and reporting. This guide covers export formats, limitations, and troubleshooting.
 
 ## Export Formats
 
@@ -24,15 +24,11 @@ CloudDash offers multiple ways to export your data for analysis, reporting, and 
 - **Special note**: Includes full metadata unlike other formats
 
 ## Export Process
-
-1. Navigate to **Admin Panel**
-2. Select **Data Management**
-3. Click on **Exports** tab
-4. Choose the dashboard or dataset to export
-5. Select your desired format
-6. Configure any filters or date ranges
-7. Click "Generate Export"
-8. You'll receive a notification when the export is ready to download
+1. Navigate to **Data Export** page
+2. Select your dataset
+3. Choose export format (CSV, XLSX, or JSON)
+4. Click "Generate Export"
+5. Download when ready
 
 ## Permissions Required
 
@@ -47,10 +43,17 @@ CloudDash offers multiple ways to export your data for analysis, reporting, and 
 
 ### "Export Failed: Size Exceeded"
 - **Cause**: Trying to export too many rows in a format with row limitations
-- **Solution**: 
-  1. Switch to XLSX format for datasets between 10,000 and 100,000 rows
-  2. Apply filters to reduce the dataset size
-  3. Break the export into multiple smaller exports
+- **Step-by-Step Solution**: 
+  1. **Switch to XLSX format** (recommended for datasets between 10,000 and 100,000 rows):
+     - Look for the Format section on the export form
+     - Select the "XLSX" radio button instead of "CSV"
+     - Click "Generate Export" again
+  2. **Alternative: Apply filters** to reduce the dataset size:
+     - Use the Date Range fields to select a smaller time period
+     - This will reduce the number of rows in your export
+  3. **Alternative: Break into smaller exports**:
+     - Export data in smaller date ranges (e.g., monthly instead of yearly)
+     - Combine the files afterward if needed
 
 ### "Export Failed: Permission Denied"
 - **Cause**: User doesn't have sufficient permissions for the requested data
@@ -59,16 +62,11 @@ CloudDash offers multiple ways to export your data for analysis, reporting, and 
   2. Export only the datasets you have permission to access
 
 ### "Export Timed Out"
-- **Cause**: The export request took too long to process
-- **Solution**:
-  1. Apply filters to reduce the dataset size
-  2. Schedule the export for off-peak hours
-  3. Break the export into multiple smaller requests
+- **Cause**: Export request too large or complex
+- **Solution**: Reduce dataset size with filters or break into smaller exports
 
 ## Best Practices
-
-1. Schedule large exports during off-peak hours
-2. Use filters to export only the data you need
-3. Use XLSX for larger datasets
-4. Use JSON when integrating with other systems
-5. Consider recurring exports for regular reporting needs
+1. Use XLSX for larger datasets (10,000+ rows)
+2. Apply filters to export only needed data
+3. Use JSON for system integrations
+4. Schedule large exports during off-peak hours

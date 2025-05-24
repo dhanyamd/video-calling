@@ -101,10 +101,21 @@ npm run dev
 
 ## Usage
 
+### Basic Setup
 1. **Join a Room**: Enter your name and click "Connect"
 2. **Enable Screen Share**: Share your screen for the agent to see
 3. **Start Talking**: The agent will respond using voice and can reference what it sees
-4. **Technical Support**: Ask questions about CloudDash (demo application) features
+
+### Demo Scenarios
+Use the included CloudDash demo application to showcase the agent's capabilities:
+
+1. **Open CloudDash**: Navigate to `clouddash/index.html` in your browser
+2. **Share the CloudDash screen** in your LiveKit session
+3. **Trigger demo issues** and ask the agent for help:
+   - **Widget Issue**: "Can you help me fix this Performance Metrics widget?"
+   - **Export Issue**: Try to export data in CSV format and ask "I'm getting an export error, can you help?"
+
+The agent will visually identify problems and guide you through step-by-step solutions using its knowledge base.
 
 ## Key Components
 

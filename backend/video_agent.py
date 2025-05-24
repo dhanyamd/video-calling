@@ -43,24 +43,25 @@ _langfuse = Langfuse()
 knowledge_manager = KnowledgeManager()
 
 INSTRUCTIONS = f"""
-You are a technical support AI specialist who can see the user's screen through video. 
-Your role is to provide real-time visual assistance for software troubleshooting.
+You are a helpful technical support AI who can see the user's screen through video.
+You provide real-time visual assistance for CloudDash, a SaaS analytics platform.
 
-Key responsibilities:
-- Identify what's on the user's screen (UI elements, error messages, settings)
-- Guide users through navigation with clear, step-by-step instructions
-- Reference relevant documentation when needed
-- Provide precise guidance based on what you can see
-- Maintain a friendly, patient, and supportive tone
+Your visual analysis approach:
+1. **Describe what you see clearly**: "I can see you're on the Dashboard page with two widgets visible"
+2. **Identify specific visual elements**: Point out error messages, red borders, warning icons, broken widgets
+3. **Read error text aloud**: State exactly what error messages say to confirm you see them
+4. **Analyze the problem**: Use your knowledge to diagnose the root cause
+5. **Guide step-by-step**: Give clear, sequential instructions to resolve the issue
+6. **Verify progress**: Ask users to confirm each step as you guide them
 
-When you see a user's screen:
-1. First acknowledge what you can see ("I can see you're in the Settings menu")
-2. Identify any visible issues or areas for improvement
-3. Provide clear instructions on what to do next
+Be particularly attentive to:
+- Red error messages and warning icons (⚠️ ❌)
+- Widgets showing "No Data" or "Failed to Load"
+- Export error dialogs with specific error types
+- Configuration panels and settings interfaces
+- Buttons and UI elements users need to click
 
-For our demo, assume the user is working with "CloudDash" - a fictional SaaS analytics platform.
-Common issues include incorrect export settings, permission issues, dashboard configuration problems,
-and navigation confusion. Adapt to whatever the user is showing you.
+Maintain a professional, patient tone while being thorough in your visual observations and methodical in your troubleshooting approach.
 
 {knowledge_manager.format_knowledge()}
 """
@@ -119,12 +120,12 @@ class VideoAgent(Agent):
     def on_user_state_change(self, event: UserStateChangedEvent) -> None:
         old_state = event.old_state
         new_state = event.new_state
-        print(f"USER STATE CHANGED: {old_state} -> {new_state}")
+        logger.info(f"User state changed: {old_state} -> {new_state}")
 
         # When user starts speaking, clear old frames
         if new_state == "speaking" and old_state != "speaking":
             self.frames = []
-            print("User started speaking - cleared previous frames")
+            logger.info("User started speaking - cleared previous frames")
         
     async def on_user_turn_completed(
         self, turn_ctx: ChatContext, new_message: ChatMessage,
@@ -138,11 +139,11 @@ class VideoAgent(Agent):
     async def stt_node(
         self, audio: AsyncIterable[rtc.AudioFrame], model_settings: ModelSettings
     ) -> Optional[AsyncIterable[stt.SpeechEvent]]:
-        logger.info(f"STT node called {self.get_current_trace().trace_id}")
         span = self.get_current_trace().span(name="stt_node", metadata={"model": "deepgram"})
         try:
             async for event in Agent.default.stt_node(self, audio, model_settings):
-                logger.info(f"STT event: {event.type} {event.request_id}")
+                if event.type == stt.SpeechEventType.FINAL_TRANSCRIPT:
+                    logger.info(f"Speech recognized: {event.alternatives[0].text[:50]}...")
                 yield event
         except Exception as e:
             span.update(level="ERROR")
@@ -157,7 +158,6 @@ class VideoAgent(Agent):
         tools: List[FunctionTool],
         model_settings: ModelSettings
     ) -> AsyncIterable[llm.ChatChunk]:
-        logger.info(f"LLM node called {self.get_current_trace().trace_id}")
 
         copied_ctx = chat_ctx.copy()
         frames_to_use = self.current_frames()
@@ -172,9 +172,9 @@ class VideoAgent(Agent):
                 role="user",
                 content=[f"{position.title()} view of user during speech:", image_content]
             )
-            print(f"ADDED {position.upper()} FRAME TO CHAT CONTEXT")
+            logger.info(f"Added {position} frame to chat context")
         else:
-            print("WARNING: No captured frames available for this conversation")
+            logger.warning("No captured frames available for this conversation")
 
         messages = openai.utils.to_chat_ctx(copied_ctx, cache_key=self.llm)
         
@@ -205,7 +205,6 @@ class VideoAgent(Agent):
     async def tts_node(
         self, text: AsyncIterable[str], model_settings: ModelSettings
     ) -> AsyncIterable[rtc.AudioFrame]:
-        logger.info(f"TTS node called {self.get_current_trace().trace_id}")
         span = self.get_current_trace().span(name="tts_node", metadata={"model": "cartesia"})
         try:
             async for event in Agent.default.tts_node(self, text, model_settings):
@@ -225,7 +224,7 @@ class VideoAgent(Agent):
     ) -> None:
         if publication.source != rtc.TrackSource.SOURCE_SCREENSHARE:
             return
-        print("TRACK SUBSCRIBED")
+        logger.info("Screen share track subscribed")
 
         # start the new stream
         asyncio.create_task(self.read_video_stream(rtc.VideoStream(track)))
@@ -235,7 +234,7 @@ class VideoAgent(Agent):
         await self.close()
         self.video_stream = video_stream
 
-        print("STARTING VIDEO FRAME SAMPLER")
+        logger.info("Starting video frame capture")
         frame_count = 0
         async for event in video_stream:
             # Only capture frames when the user is speaking
@@ -249,9 +248,8 @@ class VideoAgent(Agent):
                     self.last_frame_time = current_time
 
                     frame_count += 1
-                    print(f"CAPTURED FRAME #{frame_count}: {frame.width}x{frame.height}, type={rtc.VideoBufferType.Name(frame.type)}")
-                    print(f"Total frames stored: {len(self.frames)}")
-        print(f"VIDEO INPUT MONITOR ENDED after {frame_count} frames")
+                    logger.info(f"Captured frame #{frame_count}: {frame.width}x{frame.height}")
+        logger.info(f"Video frame capture ended - captured {frame_count} frames")
 
     def current_frames(self) -> List[rtc.VideoFrame]:
         # Add strategic frames from the conversation to provide better context
@@ -269,7 +267,7 @@ class VideoAgent(Agent):
                 if len(self.frames) >= 5:
                     mid_idx = len(self.frames) // 2
                     current_frames.append(("middle", self.frames[mid_idx]))
-        print(f"ADDING {len(current_frames)} FRAMES TO CONVERSATION (from {len(self.frames)} available frames)")
+        logger.info(f"Adding {len(current_frames)} frames to conversation (from {len(self.frames)} available)")
         # return frames in reverse order so earliest frames appear first in context
         return list(reversed(current_frames))
 
@@ -278,14 +276,14 @@ async def entrypoint(ctx: JobContext) -> None:
     # Connect to the room
     await ctx.connect()
 
-    print(f"CONNECTED TO ROOM: {ctx.room.name}")
-    print(f"LOCAL PARTICIPANT: {ctx.room.local_participant.identity}")
+    logger.info(f"Connected to room: {ctx.room.name}")
+    logger.info(f"Local participant: {ctx.room.local_participant.identity}")
 
     if len(ctx.room.remote_participants) == 0:
-        print("EXITING: No remote participants in the room")
+        logger.info("No remote participants in room, exiting")
         return
 
-    print(f"REMOTE PARTICIPANTS: {len(ctx.room.remote_participants)}")
+    logger.info(f"Found {len(ctx.room.remote_participants)} remote participants")
     # Create a simple agent session without custom frame rate
     # Just use the default settings which should work fine
     session = AgentSession()

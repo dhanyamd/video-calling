@@ -1,7 +1,7 @@
-# CloudDash Permissions System
+# CloudDash Permissions Guide
 
 ## Overview
-CloudDash uses a role-based access control (RBAC) system to manage permissions. This guide explains the different permission levels, how inheritance works, and common troubleshooting steps.
+CloudDash uses role-based access control to manage user permissions. This guide covers user roles and common permission issues.
 
 ## Permission Levels
 
@@ -14,27 +14,13 @@ CloudDash uses a role-based access control (RBAC) system to manage permissions. 
 | **Manager** | Team leadership role | • All Analyst capabilities<br>• Create and share team dashboards<br>• Manage team members' access<br>• Configure alerts and schedules |
 | **Admin** | System administration | • All Manager capabilities<br>• User management<br>• System configuration<br>• Security settings<br>• Billing management |
 
-### Workspace-Level Permissions
-- Permissions can be applied at the workspace level
-- Users can have different roles in different workspaces
-- Workspace admins can only manage their specific workspace
-
-### Resource-Level Permissions
-- Dashboards, data sources, and reports can have specific permissions
-- Resource owners can share with specific users or groups
-- Can override workspace-level permissions (both grant and restrict)
+### Permission Scope
+- **Organization Level**: Global settings and user management
+- **Dashboard Level**: Access to specific dashboards and widgets
+- **Data Source Level**: Access to underlying data
 
 ## Permission Inheritance
-
-### Inheritance Rules
-- Permissions flow from organization → workspace → resource
-- More specific permissions override more general ones
-- Explicit denials always override grants
-- Group permissions apply to all group members
-
-### Important Exception
-- Permission inheritance does not apply across workspace boundaries
-- A Manager in Workspace A has no special access in Workspace B unless explicitly granted
+Permissions flow from organization level down to individual resources. More specific permissions override general ones.
 
 ## Common Issues and Solutions
 
@@ -59,35 +45,22 @@ CloudDash uses a role-based access control (RBAC) system to manage permissions. 
   2. Create a personal copy of the dashboard (if allowed)
   3. Check if dashboard is locked for editing
 
-## Managing Permissions (Admin Guide)
+## Managing Permissions
 
 ### Adding Users
-1. Navigate to Admin → User Management
-2. Click "Add User"
-3. Enter email address and select initial role
-4. Choose workspaces to grant access to
+1. Navigate to Admin Panel
+2. Go to User Management
+3. Click "Add User" and enter details
+4. Assign appropriate role
 5. Send invitation
 
-### Creating Groups
-1. Navigate to Admin → Group Management
-2. Click "Create Group"
-3. Name the group and add description
-4. Add members by email or from existing users
-5. Set group permissions
-6. Save group
-
-### Auditing Permissions
+### Permission Audit
 1. Navigate to Admin → Security
-2. Select "Permission Audit"
-3. Search for user or resource
-4. Review effective permissions
-5. Make adjustments as needed
+2. Use "Permission Audit" to review access
+3. Make adjustments as needed
 
 ## Best Practices
-
-1. Follow the principle of least privilege
-2. Use groups for easier permission management
-3. Regularly audit permissions, especially for sensitive data
-4. Document permission assignments for critical resources
-5. Train users on permission requests and sharing procedures
-6. Create workspace boundaries that align with organizational structure
+1. Use principle of least privilege
+2. Regular permission audits
+3. Use groups for easier management
+4. Document access for critical resources

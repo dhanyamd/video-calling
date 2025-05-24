@@ -4,7 +4,7 @@
 "Building AI Video Agents in 15 Minutes: The Complete LiveKit Guide"
 
 ## Hook
-"Want to build an AI assistant that can actually see? In this video, I'll show you how to create a full-featured video AI agent using LiveKit in just 15 minutes. You'll learn how to give your AI real eyes and ears with surprisingly little code. As a bonus, I'll demonstrate how this technology can transform technical support by creating an agent that can see and respond to what's happening on a user's screen, cutting support costs while improving the customer experience."
+"Want to build an AI assistant that can actually see and troubleshoot problems? In this video, I'll show you how to create a full-featured video AI agent using LiveKit in just 15 minutes. You'll learn how to give your AI real eyes and ears with surprisingly little code. I'll demonstrate two real scenarios where the agent visually identifies problems on screen and guides users through step-by-step solutions - just like having a technical support expert who can see exactly what you're seeing."
 
 ## Introduction (1-2 minutes)
 - Welcome viewers and introduce yourself
@@ -21,15 +21,42 @@
 - Explain how the components work together
 - Key point: "This modular approach means you can easily swap pieces as needed"
 
-## Section 2: Setting Up the Backend (3-4 minutes)
-- Walk through the Python code for the video agent
+## Section 2: Setting Up the Backend (4-5 minutes)
+
+### **FastAPI Token Server (1-2 minutes)**
+- Show the `api.py` file - this is production-ready room management
+- Key features:
+  - **Automatic room creation** with unique UUIDs for each session
+  - **JWT token generation** with proper video grants (publish, subscribe, join)
+  - **Environment-based configuration** - securely loads LiveKit credentials
+  - **CORS setup** for cross-origin requests from your frontend
+- Highlight: "This isn't just demo code - this is exactly how you'd handle authentication in production"
+
+### **Video Agent Core (2-3 minutes)**
+- Walk through the `video_agent.py` file 
 - Explain key components:
-  - Agent class and settings
-  - Speech-to-Text (Deepgram)
-  - Text-to-Speech (Cartesia)
-  - LLM (GPT-4o)
-  - Room configuration
-- Highlight how LiveKit is handling all the complex video processing
+  - Agent class and AI model configuration
+  - Speech-to-Text (Deepgram), Text-to-Speech (Cartesia), LLM (GPT-4)
+  - Knowledge base integration for domain expertise
+- **Intelligent Frame Processing**:
+  - Only captures frames when user is speaking (1fps sampling rate)
+  - Strategic frame selection: most recent + first + middle for longer conversations
+  - Automatic memory management (clears frames when user starts new speech)
+  - Sends multiple frames to GPT-4 for better visual context
+- **LiveKit Workers Architecture**:
+  - Show the `cli.run_app(WorkerOptions(entrypoint_fnc=entrypoint))` line
+  - Explain: "You can run multiple instances of this worker across different servers"
+  - LiveKit automatically distributes incoming sessions across available workers
+  - Perfect for scaling: "Need to handle more users? Just spin up more workers"
+  - No load balancer needed - LiveKit handles all the orchestration
+- **Full Control vs. Real-time APIs**:
+  - Show the `llm_node` method where we modify the chat context
+  - Explain: "Unlike OpenAI's real-time API or ElevenLabs conversational agents, you have complete control"
+  - You decide exactly what goes to the LLM and when - context, images, conversation history
+  - Can add custom logic, filtering, or pre-processing before LLM calls
+  - Trade-off: More control means more complexity and potential latency
+  - "This flexibility is crucial for specialized use cases like visual troubleshooting"
+- Emphasize: "LiveKit gives you the building blocks - you control the intelligence"
 
 ## Section 3: Building the Frontend (3-4 minutes)
 - Show how to use LiveKit Components to build a video interface
@@ -52,37 +79,57 @@
       - "Choose based on voice quality, emotion control, or multilingual support"
     - **Voice Activity Detection (VAD)**: We're using Silero, which runs locally for privacy and low latency
   - Emphasize how easy it is to swap components: "Just change a couple lines of code"
+- **Creating Custom Plugins**:
+  - "What if you need a provider that's not built-in? You can create your own plugins"
+  - Show the plugin interface pattern - inherit from base classes like `STT`, `LLM`, or `TTS`
+  - Example: "Want to use a proprietary speech model? Create a custom STT plugin"
+  - "Need to integrate with your company's LLM? Build a custom LLM plugin"
+  - Plugin system ensures your custom solutions work seamlessly with LiveKit's infrastructure
+  - "This means you're never locked into specific providers - total flexibility"
 
 ## Section 5: Advanced Features (3-4 minutes)
-- Show the knowledge base integration
-  - Show how we've built a simple knowledge system in the backend
-  - Explain how the agent retrieves relevant information based on keywords
-  - Demonstrate how this makes the agent smarter by providing context
-- Show the Langfuse observability integration
-  - Walk through the actual Langfuse dashboard (not in our frontend)
-  - Show how we've integrated Langfuse in our backend code
-  - Explain the metrics and traces it captures
-  - Highlight how to use this data for monitoring and optimization
-- Emphasize how these additions make your application production-ready
+- **Knowledge Base System**:
+  - Show the markdown files (dashboard.md, export.md, permissions.md) 
+  - Explain how the KnowledgeManager loads and formats content
+  - Demonstrate how knowledge gets injected into agent instructions
+  - Show specific troubleshooting steps that match our demo scenarios
+- **Visual Frame Processing**:
+  - Explain how agent captures frames when user speaks
+  - Show the frame selection logic (most recent, first, middle)
+  - Highlight how images are sent to GPT-4 with high detail
+- **Langfuse Observability**:
+  - Walk through the Langfuse dashboard showing actual traces
+  - Show STT, LLM, and TTS spans with timing and costs
+  - Explain how this helps optimize performance in production
+- Emphasize how these features make the agent truly production-ready
 
-## Section 6: Demo - Technical Support Agent (3-4 minutes)
-- Showcase the complete application in a real-world scenario
-- Demonstrate the "CloudDash" technical support use case:
-  - Share your screen showing a fictional analytics dashboard
-  - Ask the agent for help with exporting data
-  - Show how the agent can see your screen and provide specific guidance
-  - Demonstrate how it references knowledge base information when needed
-- Highlight the business benefits:
-  - 24/7 visual support without staffing constraints
-  - Reduction in repetitive support tickets
-  - Improved customer experience through visual guidance
-  - Scalable solution for growing companies
-- Demonstrate switching between tabs
-- Discuss customization options:
-  - Different LLMs
-  - Custom prompts
-  - UI themes
-  - Additional plugins
+## Section 6: Demo - Technical Support Agent (4-5 minutes)
+- Showcase the complete application with two real demo scenarios
+- **Demo Setup**: 
+  - Open CloudDash (our demo analytics platform)
+  - Start LiveKit session and enable screen sharing
+  - Show the agent is ready to help
+
+### **Scenario 1: Widget Configuration Issue (2 minutes)**
+- **Show the problem**: Point to the broken "Performance Metrics" widget with red "ERROR: NO DATA"
+- **Ask for help**: "Can you help me fix this widget that's not working?"
+- **Agent response**: Watch agent identify the error, read the current refresh rate (1 hour), and diagnose the issue
+- **Follow guidance**: Agent guides you to click the gear icon and change refresh rate to 5 minutes
+- **Success**: Widget displays data and shows confirmation message
+
+### **Scenario 2: Export Size Exceeded Error (2 minutes)**
+- **Navigate to Data Export**: Show the export form with default settings
+- **Trigger the error**: Click "Generate Export" to show the size exceeded error
+- **Ask for help**: "I'm getting an export error, can you help?"
+- **Agent response**: Watch agent read the error details (25,000 rows, CSV 10,000 limit) and provide solution
+- **Follow guidance**: Agent guides you to select XLSX format instead of CSV
+- **Success**: Export succeeds with success message
+
+### **Key Demo Points**:
+- **Visual Problem Solving**: Agent sees and describes specific UI elements and errors
+- **Knowledge Integration**: Agent uses built-in troubleshooting guides to provide accurate solutions
+- **Step-by-step guidance**: Agent breaks down fixes into clear, actionable steps
+- **Natural interaction**: Feels like talking to a real technical support specialist
 
 ## Conclusion (1-2 minutes)
 - Recap what we've built
