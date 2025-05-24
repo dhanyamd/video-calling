@@ -42,8 +42,11 @@ function updateWidget() {
     if (refreshRate === '5min' || refreshRate === '15min') {
         // Fix the widget by updating refresh rate
         const brokenWidget = document.getElementById('broken-widget');
-        brokenWidget.querySelector('.widget-error').style.display = 'none';
-        brokenWidget.querySelector('.widget-content').innerHTML = `
+        brokenWidget.querySelector('.error-details').style.display = 'none';
+        brokenWidget.querySelector('.widget-error-large').style.display = 'none';
+        const widgetContent = brokenWidget.querySelector('.widget-content');
+        widgetContent.classList.remove('error');
+        widgetContent.innerHTML = `
             <div class="chart-placeholder">
                 <div class="bar" style="height: 85%"></div>
                 <div class="bar" style="height: 70%"></div>
@@ -54,7 +57,6 @@ function updateWidget() {
         `;
         brokenWidget.classList.remove('error');
         closeModal();
-        alert('Widget updated successfully! Data is now loading properly.');
     } else if (refreshRate === '1min') {
         alert('1 minute refresh rate requires Premium subscription. Please select 5 minutes or higher.');
     } else {
@@ -67,8 +69,9 @@ function exportData() {
     const dataset = document.getElementById('dataset-select').value;
     const format = document.querySelector('input[name="format"]:checked').value;
     
-    // Hide error message first
+    // Hide error and success messages first
     document.getElementById('export-error').style.display = 'none';
+    document.getElementById('export-success').style.display = 'none';
     
     // Simulate size exceeded error for datasets over 10,000 rows in CSV format
     if ((dataset.includes('25,000') || dataset.includes('45,000')) && format === 'csv') {
@@ -78,7 +81,7 @@ function exportData() {
     }
     
     // Success case - export works for XLSX or smaller datasets
-    alert('Export started successfully! You will receive a notification when the export is ready to download.');
+    document.getElementById('export-success').style.display = 'block';
 }
 
 // Add some dynamic behavior to make it feel more realistic

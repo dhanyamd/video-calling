@@ -39,9 +39,9 @@
   - Speech-to-Text (Deepgram), Text-to-Speech (Cartesia), LLM (GPT-4)
   - Knowledge base integration for domain expertise
 - **Intelligent Frame Processing**:
-  - Only captures frames when user is speaking (1fps sampling rate)
+  - Captures frames continuously (1fps sampling rate)
   - Strategic frame selection: most recent + first + middle for longer conversations
-  - Automatic memory management (clears frames when user starts new speech)
+  - Automatic memory management (clears frames after sending to LLM)
   - Sends multiple frames to GPT-4 for better visual context
 - **LiveKit Workers Architecture**:
   - Show the `cli.run_app(WorkerOptions(entrypoint_fnc=entrypoint))` line
@@ -94,7 +94,7 @@
   - Demonstrate how knowledge gets injected into agent instructions
   - Show specific troubleshooting steps that match our demo scenarios
 - **Visual Frame Processing**:
-  - Explain how agent captures frames when user speaks
+  - Explain how agent captures frames continuously
   - Show the frame selection logic (most recent, first, middle)
   - Highlight how images are sent to GPT-4 with high detail
 - **Langfuse Observability**:

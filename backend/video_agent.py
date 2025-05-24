@@ -43,27 +43,25 @@ _langfuse = Langfuse()
 knowledge_manager = KnowledgeManager()
 
 INSTRUCTIONS = f"""
-You are a helpful technical support AI who can see the user's screen through video.
-You provide real-time visual assistance for CloudDash, a SaaS analytics platform.
+You are a technical support AI who can provide visual assistance for CloudDash, a SaaS analytics platform, when users share their screen.
 
 IMPORTANT: Respond in plain text only. Do not use any markdown formatting including bold, italics, bullet points, numbered lists, or other markdown syntax. Your responses will be read aloud by text-to-speech.
 
-Your visual analysis approach:
-1. **Describe what you see clearly**: "I can see you're on the Dashboard page with two widgets visible"
-2. **Identify specific visual elements**: Point out error messages, red borders, warning icons, broken widgets
-3. **Clarify errors you observe**: When you see error messages, explain what they mean in simple terms rather than just repeating the exact text. Help users understand the underlying issue
-4. **Analyze the problem**: Use your knowledge to diagnose the root cause
-5. **Guide step-by-step**: Give clear, sequential instructions to resolve the issue
-6. **Verify progress**: Ask users to confirm each step as you guide them
+When screen sharing is available:
+- State what you see briefly
+- Identify the specific problem  
+- Give clear fix steps
+- Ask for confirmation only when needed
 
-Be particularly attentive to:
-- Red error messages and warning icons (⚠️ ❌)
-- Widgets showing "No Data" or "Failed to Load"
-- Export error dialogs with specific error types
-- Configuration panels and settings interfaces
-- Buttons and UI elements users need to click
+Focus on:
+- Error messages and warning icons
+- Broken widgets or "No Data" displays
+- Export errors and dialog boxes
+- Configuration panels and buttons
 
-Maintain a professional, patient tone while being thorough in your visual observations and methodical in your troubleshooting approach.
+When no screen sharing is detected, let the user know they need to share their screen for visual assistance.
+
+Keep responses short while staying helpful and accurate.
 
 {knowledge_manager.format_knowledge()}
 """
@@ -124,11 +122,6 @@ class VideoAgent(Agent):
         new_state = event.new_state
         logger.info(f"User state changed: {old_state} -> {new_state}")
 
-        # When user starts speaking, clear old frames
-        if new_state == "speaking" and old_state != "speaking":
-            self.frames = []
-            logger.info("User started speaking - cleared previous frames")
-        
     async def on_user_turn_completed(
         self, turn_ctx: ChatContext, new_message: ChatMessage,
     ) -> None:
@@ -164,18 +157,24 @@ class VideoAgent(Agent):
         copied_ctx = chat_ctx.copy()
         frames_to_use = self.current_frames()
 
-        for position, frame in frames_to_use:
-            # Use the original frame for LLM context
-            image_content = ImageContent(
-                image=frame,
-                inference_detail="high"
-            )
-            copied_ctx.add_message(
-                role="user",
-                content=[f"{position.title()} view of user during speech:", image_content]
-            )
-            logger.info(f"Added {position} frame to chat context")
+        if frames_to_use:
+            for position, frame in frames_to_use:
+                # Use the original frame for LLM context
+                image_content = ImageContent(
+                    image=frame,
+                    inference_detail="high"
+                )
+                copied_ctx.add_message(
+                    role="user",
+                    content=[f"{position.title()} view of user during speech:", image_content]
+                )
+                logger.info(f"Added {position} frame to chat context")
         else:
+            # No frames available - user is not sharing their screen
+            copied_ctx.add_message(
+                role="system",
+                content="The user is not currently sharing their screen. Let them know they need to share their screen for you to provide visual assistance."
+            )
             logger.warning("No captured frames available for this conversation")
 
         messages = openai.utils.to_chat_ctx(copied_ctx, cache_key=self.llm)
@@ -239,18 +238,16 @@ class VideoAgent(Agent):
         logger.info("Starting video frame capture")
         frame_count = 0
         async for event in video_stream:
-            # Only capture frames when the user is speaking
-            if self.session.user_state == "speaking":
-                # Capture frames at 1 per second
-                current_time = time.time()
-                if current_time - self.last_frame_time >= 1.0:
-                    # Store the frame and update time
-                    frame = event.frame
-                    self.frames.append(frame)
-                    self.last_frame_time = current_time
+            # Capture frames at 1 per second
+            current_time = time.time()
+            if current_time - self.last_frame_time >= 1.0:
+                # Store the frame and update time
+                frame = event.frame
+                self.frames.append(frame)
+                self.last_frame_time = current_time
 
-                    frame_count += 1
-                    logger.info(f"Captured frame #{frame_count}: {frame.width}x{frame.height}")
+                frame_count += 1
+                logger.info(f"Captured frame #{frame_count}: {frame.width}x{frame.height}")
         logger.info(f"Video frame capture ended - captured {frame_count} frames")
 
     def current_frames(self) -> List[rtc.VideoFrame]:
@@ -269,6 +266,8 @@ class VideoAgent(Agent):
                 if len(self.frames) >= 5:
                     mid_idx = len(self.frames) // 2
                     current_frames.append(("middle", self.frames[mid_idx]))
+            # clear the frames after using them to avoid memory bloat
+            self.frames = []
         logger.info(f"Adding {len(current_frames)} frames to conversation (from {len(self.frames)} available)")
         # return frames in reverse order so earliest frames appear first in context
         return list(reversed(current_frames))

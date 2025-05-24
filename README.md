@@ -129,7 +129,7 @@ The core AI agent that handles:
 - Langfuse observability tracking
 
 Key features:
-- Captures frames at 1fps during user speech
+- Captures frames at 1fps continuously
 - Sends multiple frames (first, middle, most recent) for better context
 - Includes comprehensive error handling and logging
 
