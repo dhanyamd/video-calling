@@ -30,6 +30,7 @@ from livekit.agents import (
 from livekit.agents.llm import ImageContent, AudioContent
 from livekit.plugins import cartesia, deepgram, openai, silero
 from livekit.plugins.turn_detector.english import EnglishModel
+from knowledge_manager import KnowledgeManager
 
 logger = logging.getLogger("openai-video-agent")
 logger.setLevel(logging.INFO)
@@ -38,8 +39,10 @@ load_dotenv()
 
 _langfuse = Langfuse()
 
+# Initialize knowledge manager
+knowledge_manager = KnowledgeManager()
 
-INSTRUCTIONS = """
+INSTRUCTIONS = f"""
 You are a technical support AI specialist who can see the user's screen through video. 
 Your role is to provide real-time visual assistance for software troubleshooting.
 
@@ -58,6 +61,8 @@ When you see a user's screen:
 For our demo, assume the user is working with "CloudDash" - a fictional SaaS analytics platform.
 Common issues include incorrect export settings, permission issues, dashboard configuration problems,
 and navigation confusion. Adapt to whatever the user is showing you.
+
+{knowledge_manager.format_knowledge()}
 """
 
 class VideoAgent(Agent):
