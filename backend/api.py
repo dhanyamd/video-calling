@@ -56,3 +56,6 @@ async def get_token(participant: str):
         "token": token.to_jwt(),
         "url": livekit_url
     }
+
+if __name__ == "__main__":
+    uvicorn.run("api:app", host="0.0.0.0", port=8000, reload=True)
