@@ -14,11 +14,12 @@ A complete AI-powered video conferencing application that combines LiveKit's rea
 
 ## Architecture
 
-The application consists of three main components:
+The application consists of four main components:
 
-1. **Backend (Python)**: FastAPI server with LiveKit agent integration
-2. **Frontend (React)**: User interface built with LiveKit Components
-3. **Knowledge Base**: Markdown files providing contextual information
+1. **Frontend (React)**: User interface built with LiveKit Components for video conferencing
+2. **Backend API (FastAPI)**: REST API server for token generation and room management
+3. **LiveKit Server**: Real-time infrastructure for video/audio streaming and room coordination
+4. **Video Agent (LiveKit Agent)**: AI-powered agent with STT, LLM, TTS, and knowledge base integration
 
 ```mermaid
 sequenceDiagram
