@@ -1,5 +1,5 @@
 livekit-api
-livekit-agents[openai,silero,deepgram,cartesia,turn-detector]
+livekit-agents[openai,silero,deepgram,cartesia,turn-detector,langfuse, gemini, assmeblyai]
 python-dotenv
 fastapi
 uvicorn

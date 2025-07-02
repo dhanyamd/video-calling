@@ -8,7 +8,7 @@ from uuid import uuid4
 
 from dotenv import load_dotenv
 from langfuse import Langfuse
-from langfuse.client import StatefulClient
+from langfuse.client import StatefulClient # type: ignore
 
 from livekit import rtc
 from livekit.agents import (
@@ -28,7 +28,7 @@ from livekit.agents import (
     llm,
 )
 from livekit.agents.llm import ImageContent, AudioContent
-from livekit.plugins import cartesia, deepgram, openai, silero
+from livekit.plugins import assemblyai, deepgram, gemini, openai, silero
 from livekit.plugins.turn_detector.english import EnglishModel
 from knowledge_manager import KnowledgeManager
 
@@ -70,9 +70,9 @@ class VideoAgent(Agent):
     def __init__(self, instructions: str, room: rtc.Room) -> None:
         super().__init__(
             instructions=instructions,
-            llm=openai.LLM(model="gpt-4.1"),
+            llm=gemini.LLM(model="gemini-2.0-flash-001"),
             stt=deepgram.STT(),
-            tts=cartesia.TTS(
+            tts=assemblyai.TTS(
                 model="sonic-2",
                 speed="fast",
                 voice="bf0a246a-8642-498a-9950-80c35e9276b5",
@@ -90,7 +90,7 @@ class VideoAgent(Agent):
 
     async def close(self) -> None:
         await self.close_video_stream()
-        if self.current_trace:
+        if self.current_trace:  
             self.current_trace = None
         _langfuse.flush()
 
